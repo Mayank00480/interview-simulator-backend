@@ -34,7 +34,7 @@ router.post('/signup', async (req, res) => {
    }
 });
 
-  router.post('/login', async (req, res) => {
+router.post('/login', async (req, res) => {
     try{
         const { email, password } = req.body;
         const user = await User.findOne({ email });
@@ -52,6 +52,11 @@ router.post('/signup', async (req, res) => {
     catch(err){
         res.status(400).json({ message: err.message });
     }
+})
+
+router.post('/logout', (req, res) => {
+    res.clearCookie('token');
+    res.json({ message: 'Logged out successfully' });
 })
 
 module.exports = router;
