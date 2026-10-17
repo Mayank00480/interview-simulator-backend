@@ -2,8 +2,10 @@ const express = require("express");
 const router = express.Router();
 const CandidateSession = require("../model/candidatesession");
 const SessionQuestion = require("../model/sessionquestion");
+const Interview = require("../model/interview");
 const validateAnswer = require("../validations/sessionAnswer");
 const getSessionDeadline = require("../utils/sessionDeadline");
+const { generateFollowUpQuestion } = require("../utils/gemini");
 
 router.post("/:id/answers", async (req, res) => {
   const { error, data } = validateAnswer(req.body);
@@ -30,7 +32,32 @@ router.post("/:id/answers", async (req, res) => {
     );
     if (!question) return res.status(404).json({ message: "Question not found" });
 
-    res.json({ message: "Answer submitted successfully", question });
+    let followUp = null;
+
+    if (!question.isFollowUp) {
+      try {
+        const interview = await Interview.findById(session.interviewId);
+        const questionText = await generateFollowUpQuestion({
+          jobRole: interview.jobRole,
+          skill: question.skill,
+          questionText: question.questionText,
+          answer: data.answer,
+        });
+
+        const last = await SessionQuestion.findOne({ sessionId: session._id }).sort("-order");
+        followUp = await SessionQuestion.create({
+          sessionId: session._id,
+          questionText,
+          skill: question.skill,
+          order: last.order + 1,
+          isFollowUp: true,
+        });
+      } catch (err) {
+        console.error("Generate follow-up error:", err);
+      }
+    }
+
+    res.json({ message: "Answer submitted successfully", question, followUp });
   } catch (err) {
     if (err.name === "CastError") return res.status(400).json({ message: "Invalid session or question id" });
     if (err.name === "ValidationError") return res.status(400).json({ message: err.message });

@@ -5,7 +5,7 @@ const InterviewQuestion = require("../model/interviewquestions");
 const auth = require("../middleware/userAuth");
 const { validateInterviewUpdate, validateInterview} = require("../validations/interview");
 const validateQuestionUpdate = require("../validations/interviewQuestions");
-const generateQuestions = require("../utils/gemini");
+const { generateQuestions } = require("../utils/gemini");
 
 router.post("/", auth, async (req, res) => {
   const error = validateInterview(req.body);
