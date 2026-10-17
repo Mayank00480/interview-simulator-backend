@@ -6,7 +6,8 @@ const generateQuestions = async ({ jobRole, jobDescription, skills, experienceLe
   const prompt = `Generate ${questionCount} interview questions for a ${experienceLevel} ${jobRole} role.
 Job description: ${jobDescription}
 Skills to assess: ${skills.join(", ")}
-Each question must be clear, relevant, and appropriate for the experience level.`;
+Each question must be clear, relevant, and appropriate for the experience level.
+For each question, set skill to the exact skill it assesses, chosen only from the listed skills.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-flash-latest",
@@ -15,7 +16,14 @@ Each question must be clear, relevant, and appropriate for the experience level.
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.ARRAY,
-        items: { type: Type.STRING },
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            questionText: { type: Type.STRING },
+            skill: { type: Type.STRING },
+          },
+          required: ["questionText", "skill"],
+        },
       },
     },
   });

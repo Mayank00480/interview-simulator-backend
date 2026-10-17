@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Interview = require("../model/interview");
+const InterviewQuestion = require("../model/interviewquestions");
 const auth = require("../middleware/userAuth");
 const { validateInterviewUpdate, validateInterview} = require("../validations/interview");
 const generateQuestions = require("../utils/gemini");
@@ -75,7 +76,18 @@ router.post("/:id/generate-questions", auth, async (req, res) => {
     if (!interview) return res.status(404).json({ message: "Interview not found" });
 
     const questions = await generateQuestions(interview);
-    res.json({ message: "Questions generated successfully", questions });
+
+    await InterviewQuestion.deleteMany({ interviewId: interview._id });
+    const saved = await InterviewQuestion.insertMany(
+      questions.map((question, index) => ({
+        interviewId: interview._id,
+        questionText: question.questionText,
+        skill: question.skill,
+        order: index + 1,
+      }))
+    );
+
+    res.json({ message: "Questions generated successfully", questions: saved });
   } catch (err) {
     if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
     console.error("Generate questions error:", err);
