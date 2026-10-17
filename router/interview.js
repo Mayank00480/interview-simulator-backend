@@ -57,12 +57,15 @@ router.put("/:id", auth, async (req, res) => {
 
 router.post("/:id/publish", auth, async (req, res) => {
   try {
-    const interview = await Interview.findOneAndUpdate(
-      { _id: req.params.id, adminId: req.user._id },
-      { status: "PUBLISHED" },
-      { new: true, runValidators: true }
-    ).select("-adminId");
+    const interview = await Interview.findOne({ _id: req.params.id, adminId: req.user._id }).select("-adminId");
     if (!interview) return res.status(404).json({ message: "Interview not found" });
+
+    const hasQuestions = await InterviewQuestion.exists({ interviewId: interview._id });
+    if (!hasQuestions) return res.status(400).json({ message: "Generate questions before publishing" });
+
+    interview.status = "PUBLISHED";
+    await interview.save();
+
     res.json({ message: "Interview published successfully", interview });
   } catch (err) {
     if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
