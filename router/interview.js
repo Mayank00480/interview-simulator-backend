@@ -52,4 +52,20 @@ router.put("/:id", auth, async (req, res) => {
   }
 });
 
+router.post("/:id/publish", auth, async (req, res) => {
+  try {
+    const interview = await Interview.findOneAndUpdate(
+      { _id: req.params.id, adminId: req.user._id },
+      { status: "PUBLISHED" },
+      { new: true, runValidators: true }
+    ).select("-adminId");
+    if (!interview) return res.status(404).json({ message: "Interview not found" });
+    res.json({ message: "Interview published successfully", interview });
+  } catch (err) {
+    if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
+    console.error("Publish interview error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 module.exports = router;
