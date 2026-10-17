@@ -3,6 +3,7 @@ const router = express.Router();
 const Interview = require("../model/interview");
 const auth = require("../middleware/userAuth");
 const { validateInterviewUpdate, validateInterview} = require("../validations/interview");
+const generateQuestions = require("../utils/gemini");
 
 router.post("/", auth, async (req, res) => {
   const error = validateInterview(req.body);
@@ -64,6 +65,20 @@ router.post("/:id/publish", auth, async (req, res) => {
   } catch (err) {
     if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
     console.error("Publish interview error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/:id/generate-questions", auth, async (req, res) => {
+  try {
+    const interview = await Interview.findOne({ _id: req.params.id, adminId: req.user._id });
+    if (!interview) return res.status(404).json({ message: "Interview not found" });
+
+    const questions = await generateQuestions(interview);
+    res.json({ message: "Questions generated successfully", questions });
+  } catch (err) {
+    if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
+    console.error("Generate questions error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
