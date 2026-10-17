@@ -8,6 +8,7 @@ const connectDB = require('./utils/db');
 const userRouter = require('./router/user');
 const interviewRouter = require('./router/interview');
 const candidateSessionRouter = require('./router/candidateSession');
+const sessionRouter = require('./router/session');
 
 
 app.use(express.json());
@@ -15,6 +16,7 @@ app.use(cookieParser());
 app.use('/api/users', userRouter);
 app.use('/api/interviews', interviewRouter);
 app.use('/api/interviews', candidateSessionRouter);
+app.use('/api/sessions', sessionRouter);
 
 connectDB().then(() => {
   console.log('Connected to the database');

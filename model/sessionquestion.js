@@ -24,6 +24,11 @@ const sessionQuestionSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+
+    answer: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
