@@ -41,7 +41,7 @@ router.put("/:id", auth, async (req, res) => {
       { _id: req.params.id, adminId: req.user._id },
       data,
       { new: true, runValidators: true }
-    );
+    ).select("-adminId");
     if (!interview) return res.status(404).json({ message: "Interview not found" });
     res.json({ message: "Interview updated successfully", interview });
   } catch (err) {
