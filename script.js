@@ -7,12 +7,14 @@ const port = process.env.PORT || 3000;
 const connectDB = require('./utils/db');
 const userRouter = require('./router/user');
 const interviewRouter = require('./router/interview');
+const candidateSessionRouter = require('./router/candidateSession');
 
 
 app.use(express.json());
 app.use(cookieParser());
 app.use('/api/users', userRouter);
 app.use('/api/interviews', interviewRouter);
+app.use('/api/interviews', candidateSessionRouter);
 
 connectDB().then(() => {
   console.log('Connected to the database');
