@@ -29,6 +29,11 @@ const sessionQuestionSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+
+    isFollowUp: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

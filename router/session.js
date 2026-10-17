@@ -3,6 +3,7 @@ const router = express.Router();
 const CandidateSession = require("../model/candidatesession");
 const SessionQuestion = require("../model/sessionquestion");
 const validateAnswer = require("../validations/sessionAnswer");
+const getSessionDeadline = require("../utils/sessionDeadline");
 
 router.post("/:id/answers", async (req, res) => {
   const { error, data } = validateAnswer(req.body);
@@ -16,8 +17,7 @@ router.post("/:id/answers", async (req, res) => {
       return res.status(400).json({ message: "Session is not active" });
     }
 
-    const deadline = new Date(session.startedAt.getTime() + session.duration * 60000);
-    if (deadline <= new Date()) {
+    if (getSessionDeadline(session) <= new Date()) {
       session.status = "EXPIRED";
       await session.save();
       return res.status(400).json({ message: "Session has expired" });

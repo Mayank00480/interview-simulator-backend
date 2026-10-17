@@ -48,7 +48,7 @@ router.post("/:id/sessions", async (req, res) => {
     res.status(201).json({
       message: "Session started successfully",
       session,
-      question: sessionQuestions[0],
+      questions: sessionQuestions,
     });
   } catch (err) {
     if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
