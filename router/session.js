@@ -57,7 +57,7 @@ router.post("/:id/answers", async (req, res) => {
       }
     }
 
-    res.json({ message: "Answer submitted successfully", question, followUp });
+    res.json({ message: "Answer submitted successfully", question: followUp || question });
   } catch (err) {
     if (err.name === "CastError") return res.status(400).json({ message: "Invalid session or question id" });
     if (err.name === "ValidationError") return res.status(400).json({ message: err.message });
