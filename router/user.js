@@ -47,7 +47,7 @@ router.post('/login', async (req, res) => {
         }
         const token = user.generateAuthToken();
         res.cookie('token', token, { httpOnly: true });
-        res.json({ token });
+        res.json({ message: 'Logged in successfully' });
     }
     catch(err){
         res.status(400).json({ message: err.message });
