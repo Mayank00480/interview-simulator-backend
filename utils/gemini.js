@@ -2,6 +2,8 @@ const { GoogleGenAI, Type } = require("@google/genai");
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+const MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
+
 const generateQuestions = async ({ jobRole, jobDescription, skills, experienceLevel, questionCount }) => {
   const prompt = `Generate ${questionCount} interview questions for a ${experienceLevel} ${jobRole} role.
 Job description: ${jobDescription}
@@ -10,7 +12,7 @@ Each question must be clear, relevant, and appropriate for the experience level.
 For each question, set skill to the exact skill it assesses, chosen only from the listed skills.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-flash-latest",
+    model: MODEL,
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -38,7 +40,7 @@ Candidate's answer: ${answer}
 Ask one short follow-up question that digs deeper into the candidate's answer to better assess the skill: ${skill}.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-flash-latest",
+    model: MODEL,
     contents: prompt,
     config: {
       responseMimeType: "application/json",
