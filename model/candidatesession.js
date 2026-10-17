@@ -38,6 +38,11 @@ const candidateSessionSchema = new mongoose.Schema(
       default: "PENDING",
     },
 
+    duration: {
+      type: Number,
+      min: 0,
+    },
+
     startedAt: {
       type: Date,
     },

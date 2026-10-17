@@ -25,9 +25,13 @@ router.post("/:id/sessions", async (req, res) => {
     const interviewQuestions = await InterviewQuestion.find({ interviewId: interview._id }).sort("order");
     if (!interviewQuestions.length) return res.status(400).json({ message: "No questions available for this interview" });
 
+    const remainingMinutes = Math.ceil((interview.expiresAt - Date.now()) / 60000);
+    const duration = Math.min(interview.duration, remainingMinutes);
+
     const session = await CandidateSession.create({
       interviewId: interview._id,
       ...data,
+      duration,
       status: "IN_PROGRESS",
       startedAt: new Date(),
     });
