@@ -22,4 +22,14 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
+router.get("/", auth, async (req, res) => {
+  try {
+    const interviews = await Interview.find({ adminId: req.user._id }).select("-adminId");
+    res.json({ interviews });
+  } catch (err) {
+    console.error("Get interviews error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 module.exports = router;
