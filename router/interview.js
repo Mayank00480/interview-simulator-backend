@@ -4,6 +4,7 @@ const Interview = require("../model/interview");
 const InterviewQuestion = require("../model/interviewquestions");
 const auth = require("../middleware/userAuth");
 const { validateInterviewUpdate, validateInterview} = require("../validations/interview");
+const validateQuestionUpdate = require("../validations/interviewQuestions");
 const generateQuestions = require("../utils/gemini");
 
 router.post("/", auth, async (req, res) => {
@@ -91,6 +92,30 @@ router.post("/:id/generate-questions", auth, async (req, res) => {
   } catch (err) {
     if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
     console.error("Generate questions error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.put("/:id/questions/:questionId", auth, async (req, res) => {
+  const { error, data } = validateQuestionUpdate(req.body);
+  if (error) return res.status(400).json({ message: error });
+
+  try {
+    const interview = await Interview.findOne({ _id: req.params.id, adminId: req.user._id });
+    if (!interview) return res.status(404).json({ message: "Interview not found" });
+
+    const question = await InterviewQuestion.findOneAndUpdate(
+      { _id: req.params.questionId, interviewId: interview._id },
+      data,
+      { new: true, runValidators: true }
+    );
+    if (!question) return res.status(404).json({ message: "Question not found" });
+
+    res.json({ message: "Question updated successfully", question });
+  } catch (err) {
+    if (err.name === "ValidationError") return res.status(400).json({ message: err.message });
+    if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview or question id" });
+    console.error("Update question error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
