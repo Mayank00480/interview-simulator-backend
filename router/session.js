@@ -5,7 +5,51 @@ const SessionQuestion = require("../model/sessionquestion");
 const Interview = require("../model/interview");
 const validateAnswer = require("../validations/sessionAnswer");
 const getSessionDeadline = require("../utils/sessionDeadline");
-const { generateFollowUpQuestion } = require("../utils/gemini");
+const { generateFollowUpQuestion, evaluateSession } = require("../utils/gemini");
+
+router.post("/:id/complete", async (req, res) => {
+  try {
+    const session = await CandidateSession.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (session.status !== "IN_PROGRESS") {
+      return res.status(400).json({ message: "Session is not active" });
+    }
+
+    const questions = await SessionQuestion.find({ sessionId: session._id }).sort("order");
+    const interview = await Interview.findById(session.interviewId);
+
+    if (interview) {
+      try {
+        const result = await evaluateSession({
+          jobRole: interview.jobRole,
+          experienceLevel: interview.experienceLevel,
+          questions: questions.map((question) => ({
+            questionText: question.questionText,
+            skill: question.skill,
+            answer: question.answer,
+          })),
+        });
+
+        session.overallScore = result.overallScore;
+        session.skillScores = result.skillScores;
+        session.evaluation = result.evaluation;
+      } catch (err) {
+        console.error("Evaluate session error:", err);
+      }
+    }
+
+    session.status = "COMPLETED";
+    session.completedAt = new Date();
+    await session.save();
+
+    res.json({ message: "Session completed successfully", session });
+  } catch (err) {
+    if (err.name === "CastError") return res.status(400).json({ message: "Invalid session id" });
+    console.error("Complete session error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 router.post("/:id/answers", async (req, res) => {
   const { error, data } = validateAnswer(req.body);
