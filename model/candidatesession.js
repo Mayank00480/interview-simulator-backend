@@ -54,12 +54,13 @@ const candidateSessionSchema = new mongoose.Schema(
     overallScore: {
       type: Number,
       min: 0,
+      max: 100,
     },
 
     skillScores: [
       {
         skill: { type: String, required: true, trim: true },
-        score: { type: Number, required: true, min: 0 },
+        score: { type: Number, required: true, min: 0, max: 10 },
         _id: false,
       },
     ],
