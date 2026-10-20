@@ -3,6 +3,7 @@ const User = require('../model/user');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const validator = require('validator');
+const auth = require('../middleware/userAuth');
 
 router.post('/signup', async (req, res) => {
    try{
@@ -51,6 +52,16 @@ router.post('/login', async (req, res) => {
     }
     catch(err){
         res.status(400).json({ message: err.message });
+    }
+})
+
+router.get('/profile', auth, (req, res) => {
+    try {
+        const { password, ...user } = req.user.toObject();
+        res.json({ user });
+    } catch (err) {
+        console.error('Get profile error:', err);
+        res.status(500).json({ message: 'Internal server error' });
     }
 })
 
