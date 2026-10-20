@@ -4,7 +4,23 @@ const Interview = require("../model/interview");
 const InterviewQuestion = require("../model/interviewquestions");
 const CandidateSession = require("../model/candidatesession");
 const SessionQuestion = require("../model/sessionquestion");
+const auth = require("../middleware/userAuth");
 const validateCandidateSession = require("../validations/candidateSession");
+
+router.get("/:id/sessions", auth, async (req, res) => {
+  try {
+    const interview = await Interview.findOne({ _id: req.params.id, adminId: req.user._id });
+    if (!interview) return res.status(404).json({ message: "Interview not found" });
+
+    const sessions = await CandidateSession.find({ interviewId: interview._id }).sort("-createdAt");
+
+    res.json({ sessions });
+  } catch (err) {
+    if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
+    console.error("Get interview sessions error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 router.post("/:id/sessions", async (req, res) => {
   const { error, data } = validateCandidateSession(req.body);
