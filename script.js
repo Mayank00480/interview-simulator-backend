@@ -13,7 +13,7 @@ const sessionRouter = require('./router/session');
 
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: 'https://willowy-macaron-361ce8.netlify.app',
   credentials: true
 }));
 app.use(express.json());
