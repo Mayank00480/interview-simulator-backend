@@ -7,6 +7,25 @@ const validateAnswer = require("../validations/sessionAnswer");
 const getSessionDeadline = require("../utils/sessionDeadline");
 const { generateFollowUpQuestion, evaluateSession } = require("../utils/gemini");
 
+router.get("/:id/questions", async (req, res) => {
+  try {
+    const session = await CandidateSession.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    if (getSessionDeadline(session) <= new Date() && session.status === "IN_PROGRESS") {
+      session.status = "EXPIRED";
+      await session.save();
+    }
+
+    const questions = await SessionQuestion.find({ sessionId: session._id }).sort("order");
+    res.json({ questions });
+  } catch (err) {
+    if (err.name === "CastError") return res.status(400).json({ message: "Invalid session id" });
+    console.error("Get session questions error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 router.post("/:id/complete", async (req, res) => {
   try {
     const session = await CandidateSession.findById(req.params.id);
