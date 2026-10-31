@@ -5,6 +5,12 @@ const bcrypt = require('bcrypt');
 const validator = require('validator');
 const auth = require('../middleware/userAuth');
 
+const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none'
+};
+
 router.post('/signup', async (req, res) => {
    try{
     const { username, email, password } = req.body;
@@ -27,7 +33,7 @@ router.post('/signup', async (req, res) => {
     const user = new User({ username, email, password: hashedPassword });
     const token = user.generateAuthToken();
     await user.save();
-    res.cookie('token', token, { httpOnly: true });
+    res.cookie('token', token, cookieOptions);
     res.status(201).json(user);
    }
    catch(err){
@@ -47,7 +53,7 @@ router.post('/login', async (req, res) => {
             throw new Error('Invalid credentials');
         }
         const token = user.generateAuthToken();
-        res.cookie('token', token, { httpOnly: true });
+        res.cookie('token', token, cookieOptions);
         res.json({ message: 'Logged in successfully' });
     }
     catch(err){
@@ -66,7 +72,7 @@ router.get('/profile', auth, (req, res) => {
 })
 
 router.post('/logout', (req, res) => {
-    res.clearCookie('token');
+    res.clearCookie('token', cookieOptions);
     res.json({ message: 'Logged out successfully' });
 })
 
