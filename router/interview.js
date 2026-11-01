@@ -4,7 +4,7 @@ const Interview = require("../model/interview");
 const InterviewQuestion = require("../model/interviewquestions");
 const auth = require("../middleware/userAuth");
 const { validateInterviewUpdate, validateInterview} = require("../validations/interview");
-const validateQuestionUpdate = require("../validations/interviewQuestions");
+const { validateQuestionAdd, validateQuestionUpdate } = require("../validations/interviewQuestions");
 const { generateQuestions } = require("../utils/gemini");
 
 router.post("/", auth, async (req, res) => {
@@ -99,7 +99,37 @@ router.post("/:id/generate-questions", auth, async (req, res) => {
   }
 });
 
-router.put("/:id/questions/:questionId", auth, async (req, res) => {
+router.post("/:id/questions", auth, async (req, res) => {
+  const { error, data } = validateQuestionAdd(req.body);
+  if (error) return res.status(400).json({ message: error });
+
+  try {
+    const interview = await Interview.findOne({ _id: req.params.id, adminId: req.user._id });
+    if (!interview) return res.status(404).json({ message: "Interview not found" });
+
+    let order = data.order;
+    if (order === undefined) {
+      const lastQuestion = await InterviewQuestion.findOne({ interviewId: interview._id }).sort("-order");
+      order = lastQuestion ? lastQuestion.order + 1 : 1;
+    }
+
+    const question = await InterviewQuestion.create({
+      interviewId: interview._id,
+      questionText: data.questionText,
+      skill: data.skill,
+      order,
+    });
+
+    res.status(201).json({ message: "Question added successfully", question });
+  } catch (err) {
+    if (err.name === "ValidationError") return res.status(400).json({ message: err.message });
+    if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview id" });
+    console.error("Add question error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+const updateQuestionHandler = async (req, res) => {
   const { error, data } = validateQuestionUpdate(req.body);
   if (error) return res.status(400).json({ message: error });
 
@@ -119,6 +149,28 @@ router.put("/:id/questions/:questionId", auth, async (req, res) => {
     if (err.name === "ValidationError") return res.status(400).json({ message: err.message });
     if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview or question id" });
     console.error("Update question error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+router.put("/:id/questions/:questionId", auth, updateQuestionHandler);
+router.patch("/:id/questions/:questionId", auth, updateQuestionHandler);
+
+router.delete("/:id/questions/:questionId", auth, async (req, res) => {
+  try {
+    const interview = await Interview.findOne({ _id: req.params.id, adminId: req.user._id });
+    if (!interview) return res.status(404).json({ message: "Interview not found" });
+
+    const question = await InterviewQuestion.findOneAndDelete({
+      _id: req.params.questionId,
+      interviewId: interview._id,
+    });
+    if (!question) return res.status(404).json({ message: "Question not found" });
+
+    res.json({ message: "Question deleted successfully", question });
+  } catch (err) {
+    if (err.name === "CastError") return res.status(400).json({ message: "Invalid interview or question id" });
+    console.error("Delete question error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
